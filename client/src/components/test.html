@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload Signature</title>
+</head>
+<body>
+
+  <input type="file" id="signature">
+  <button onclick="uploadFile()">Upload</button>
+
+  <script>
+    async function uploadFile() {
+      const file = document.getElementById("signature").files[0];
+
+      const formData = new FormData();
+      formData.append("signature", file);
+
+      const res = await fetch(
+        "http://localhost:5000/api/auth/upload-signature",
+        {
+          method: "POST",
+          headers: {
+            Authorization: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjZhMjZiOGE4MzVjYjMxMDFkM2QyMmI3ZCIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNzgwOTgyNTE4LCJleHAiOjE3ODE1ODczMTh9.j7GYw1CsmP4lBLDdXfvgPphm7dH_KDD9xhcOvRTTI2c"
+          },
+          body: formData
+        }
+      );
+
+      const data = await res.json();
+      console.log(data);
+      alert(JSON.stringify(data));
+    }
+  </script>
+
+</body>
+</html>
