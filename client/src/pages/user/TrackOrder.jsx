@@ -14,13 +14,8 @@ export default function TrackOrder() {
 
   const fetchOrder = async () => {
     try {
-      const res = await API.get("/orders/my-orders");
-
-      const foundOrder = res.data.orders.find(
-        (o) => o._id === id
-      );
-
-      setOrder(foundOrder);
+      const res = await API.get(`/orders/${id}`);
+      setOrder(res.data.order);
     } catch (error) {
       console.log(error);
     } finally {

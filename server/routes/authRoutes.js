@@ -10,6 +10,12 @@ const {
 const { protect } = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
 const upload = require("../middleware/uploadMiddleware");
+const validate = require("../middleware/validateMiddleware");
+const {
+  registerValidator,
+  loginValidator,
+  createDriverValidator,
+} = require("./authValidators");
 
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
@@ -17,8 +23,8 @@ const bcrypt = require("bcryptjs");
 // =====================
 // AUTH ROUTES
 // =====================
-router.post("/register", registerUser);
-router.post("/login", loginUser);
+router.post("/register", registerValidator, validate, registerUser);
+router.post("/login", loginValidator, validate, loginUser);
 
 // =====================
 // UPLOAD SIGNATURE
@@ -89,6 +95,8 @@ router.post(
   "/create-driver",
   protect,
   roleMiddleware("admin"),
+  createDriverValidator,
+  validate,
   async (req, res) => {
     try {
       const { name, email, password, phone } = req.body;

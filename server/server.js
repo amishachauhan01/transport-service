@@ -8,6 +8,7 @@ const authRoutes = require("./routes/authRoutes");
 const vehicleRoutes = require("./routes/vehicleRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const pdfRoutes = require("./routes/pdfRoutes");
+const errorHandler = require("./middleware/errorMiddleware");
 
 // Connect DB
 connectDB();
@@ -27,6 +28,8 @@ app.use("/api/vehicles", vehicleRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/pdf", pdfRoutes);
 app.use("/api/reports", require("./routes/reportRoutes"));
+
+app.use(errorHandler);
 
 // Home route
 app.get("/", (req, res) => {

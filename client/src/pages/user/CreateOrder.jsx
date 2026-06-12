@@ -1,9 +1,13 @@
 import { useState } from "react";
 import API from "../../api/axios";
 import { useNavigate } from "react-router-dom";
+import { parseApiError } from "../../utils/parseApiError";
 
 export default function CreateOrder() {
   const navigate = useNavigate();
+
+  const [submitError, setSubmitError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState([]);
 
   const [form, setForm] = useState({
     pickupLocation: "",
@@ -27,6 +31,8 @@ export default function CreateOrder() {
 
     try {
       setLoading(true);
+      setSubmitError("");
+      setFieldErrors([]);
 
       // ✅ MUST USE FormData
       const formData = new FormData();
@@ -54,10 +60,9 @@ export default function CreateOrder() {
 
     } catch (error) {
       console.log("ERROR:", error.response?.data || error.message);
-
-      alert(
-        error.response?.data?.message || "Order creation failed"
-      );
+      const { message, fields } = parseApiError(error);
+      setSubmitError(message);
+      setFieldErrors(fields);
     } finally {
       setLoading(false);
     }
@@ -68,6 +73,16 @@ export default function CreateOrder() {
       <h2>Create Order</h2>
 
       <form onSubmit={handleSubmit}>
+        {submitError && <p style={{ color: "red" }}>{submitError}</p>}
+        {fieldErrors.length > 0 && (
+          <ul style={{ color: "red", paddingLeft: "20px" }}>
+            {fieldErrors.map((error) => (
+              <li key={`${error.field}-${error.message}`}>
+                {error.field}: {error.message}
+              </li>
+            ))}
+          </ul>
+        )}
 
         <input
           name="pickupLocation"

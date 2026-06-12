@@ -97,20 +97,11 @@ export default function AdminDashboard() {
   // ================= DOWNLOAD INVOICE =================
   const downloadInvoice = async (orderId) => {
     try {
-      const token = localStorage.getItem("token");
+      const response = await API.get(`/orders/invoice/${orderId}`, {
+        responseType: "blob",
+      });
 
-      const response = await fetch(
-        `http://localhost:5000/api/orders/invoice/${orderId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-
+      const url = window.URL.createObjectURL(response.data);
       const link = document.createElement("a");
       link.href = url;
       link.download = `invoice-${orderId}.pdf`;
@@ -121,6 +112,7 @@ export default function AdminDashboard() {
       link.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
+      console.log(error);
       alert("Invoice Download Failed");
     }
   };

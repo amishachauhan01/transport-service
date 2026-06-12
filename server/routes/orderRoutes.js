@@ -10,6 +10,7 @@ const {
   updateOrderStatus,
   getMyOrders,
   getDriverOrders,
+  getOrderById,
 } = require("../controllers/orderController");
 
 const { downloadInvoice } = require("../controllers/pdfController");
@@ -24,11 +25,22 @@ const upload = require("../middleware/uploadMiddleware");
 // CREATE ORDER (USER / ADMIN)
 // + SIGNATURE UPLOAD
 // =====================
+const validate = require("../middleware/validateMiddleware");
+const {
+  createOrderValidator,
+  assignVehicleValidator,
+  assignDriverValidator,
+  updateOrderStatusValidator,
+  orderIdParamValidator,
+} = require("./orderValidators");
+
 router.post(
   "/",
   protect,
   roleMiddleware("user", "admin"),
   upload.single("signature"),
+  createOrderValidator,
+  validate,
   createOrder
 );
 
@@ -54,7 +66,6 @@ router.get(
   getMyOrders
 );
 
-
 // =====================
 // DRIVER ORDERS
 // =====================
@@ -65,6 +76,18 @@ router.get(
   getDriverOrders
 );
 
+// =====================
+// ORDER BY ID
+// =====================
+router.get(
+  "/:id",
+  protect,
+  roleMiddleware("admin", "user", "driver"),
+  orderIdParamValidator,
+  validate,
+  getOrderById
+);
+
 
 // =====================
 // ASSIGN VEHICLE (ADMIN)
@@ -73,6 +96,8 @@ router.put(
   "/assign-vehicle",
   protect,
   roleMiddleware("admin"),
+  assignVehicleValidator,
+  validate,
   assignVehicle
 );
 
@@ -84,6 +109,8 @@ router.put(
   "/assign-driver",
   protect,
   roleMiddleware("admin"),
+  assignDriverValidator,
+  validate,
   assignDriver
 );
 
@@ -95,6 +122,8 @@ router.put(
   "/update-status",
   protect,
   roleMiddleware("admin", "driver"),
+  updateOrderStatusValidator,
+  validate,
   updateOrderStatus
 );
 
@@ -106,6 +135,8 @@ router.get(
   "/invoice/:id",
   protect,
   roleMiddleware("admin", "user"),
+  orderIdParamValidator,
+  validate,
   downloadInvoice
 );
 

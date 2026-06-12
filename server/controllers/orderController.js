@@ -12,18 +12,30 @@ const { orderCreatedTemplate } = require("../templates/emailTemplate");
 // =====================
 exports.createOrder = async (req, res) => {
   try {
+    const { pickupLocation, deliveryLocation, productName, weight } = req.body;
     console.log("🔥 CREATE ORDER BODY:", req.body);
     console.log("📎 FILE:", req.file);
 
+    if (!pickupLocation || !deliveryLocation || !productName || !weight) {
+      return res.status(400).json({
+        success: false,
+        message: "pickupLocation, deliveryLocation, productName, and weight are required",
+      });
+    }
+
+    if (isNaN(weight) || Number(weight) <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "weight must be a positive number",
+      });
+    }
+
     const order = await Order.create({
       customer: req.user._id,
-
-      pickupLocation: req.body.pickupLocation,
-      deliveryLocation: req.body.deliveryLocation,
-      productName: req.body.productName,
-      weight: req.body.weight,
-
-      // ✅ SIGNATURE SAFE
+      pickupLocation,
+      deliveryLocation,
+      productName,
+      weight: Number(weight),
       signature: req.file ? req.file.path : null,
     });
 
@@ -72,6 +84,46 @@ exports.getMyOrders = async (req, res) => {
       orders,
     });
 
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+exports.getOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate("customer")
+      .populate("vehicle")
+      .populate("driver");
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: "Order not found",
+      });
+    }
+
+    if (req.user.role === "user" && order.customer._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied",
+      });
+    }
+
+    if (req.user.role === "driver" && order.driver?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied",
+      });
+    }
+
+    return res.json({
+      success: true,
+      order,
+    });
   } catch (error) {
     return res.status(500).json({
       success: false,
@@ -189,11 +241,19 @@ exports.assignDriver = async (req, res) => {
   try {
     const { orderId, driverId } = req.body;
 
+    if (!orderId || !driverId) {
+      return res.status(400).json({ message: "orderId and driverId are required" });
+    }
+
     const order = await Order.findById(orderId);
     const driver = await User.findById(driverId);
 
     if (!order || !driver) {
       return res.status(404).json({ message: "Not found" });
+    }
+
+    if (driver.role !== "driver") {
+      return res.status(400).json({ message: "Assigned user must have driver role" });
     }
 
     order.driver = driverId;
@@ -236,6 +296,10 @@ exports.updateOrderStatus = async (req, res) => {
     const order = await Order.findById(orderId);
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (req.user.role === "driver" && order.driver?.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Drivers can only update their own assigned orders" });
     }
 
     order.status = status;

@@ -48,6 +48,7 @@ function AppRoutes() {
 
         {/* ================= AUTH ================= */}
         <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
 
         {/* ================= USER ================= */}
@@ -114,6 +115,14 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/driver/dashboard"
+          element={
+            <ProtectedRoute role="driver">
+              <DriverDashboard />
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/driver/orders"
@@ -136,6 +145,14 @@ function AppRoutes() {
         {/* ================= ADMIN ================= */}
         <Route
           path="/admin"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dashboard"
           element={
             <ProtectedRoute role="admin">
               <AdminDashboard />

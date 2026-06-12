@@ -1,6 +1,7 @@
 import { useState } from "react";
 import API from "../../api/axios";
 import { useNavigate } from "react-router-dom";
+import { parseApiError } from "../../utils/parseApiError";
 
 function Register() {
   const navigate = useNavigate();
@@ -10,8 +11,10 @@ function Register() {
     email: "",
     password: "",
     phone: "",
-    role: "user", // ✅ default role
   });
+
+  const [submitError, setSubmitError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState([]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -20,13 +23,18 @@ function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    setSubmitError("");
+    setFieldErrors([]);
+
     try {
       const res = await API.post("/auth/register", form);
 
       alert(res.data.message);
       navigate("/");
     } catch (error) {
-      alert(error.response?.data?.message || "Error");
+      const { message, fields } = parseApiError(error);
+      setSubmitError(message);
+      setFieldErrors(fields);
     }
   };
 
@@ -35,17 +43,21 @@ function Register() {
       <h2>Register</h2>
 
       <form onSubmit={handleSubmit}>
+        {submitError && <p style={{ color: "red" }}>{submitError}</p>}
+        {fieldErrors.length > 0 && (
+          <ul style={{ color: "red", paddingLeft: "20px" }}>
+            {fieldErrors.map((error) => (
+              <li key={`${error.field}-${error.message}`}>
+                {error.field}: {error.message}
+              </li>
+            ))}
+          </ul>
+        )}
+
         <input name="name" placeholder="Name" onChange={handleChange} />
         <input name="email" placeholder="Email" onChange={handleChange} />
         <input name="password" type="password" placeholder="Password" onChange={handleChange} />
         <input name="phone" placeholder="Phone" onChange={handleChange} />
-
-        {/* ✅ ROLE SELECT ADD KIYA */}
-        <select name="role" onChange={handleChange} value={form.role}>
-          <option value="user">User</option>
-          <option value="driver">Driver</option>
-          <option value="admin">Admin</option>
-        </select>
 
         <button type="submit">Register</button>
       </form>

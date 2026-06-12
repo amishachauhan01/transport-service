@@ -14,17 +14,10 @@ export default function OrderDetails() {
     try {
       setLoading(true);
 
-      const res = await API.get("/orders/my-orders");
+      const res = await API.get(`/orders/${id}`);
 
-      const foundOrder = res.data.orders.find(
-        (o) => o._id === id
-      );
-
-      if (!foundOrder) {
-        setError("Order not found");
-      } else {
-        setOrder(foundOrder);
-      }
+      setOrder(res.data.order);
+      setError("");
     } catch (err) {
       console.log(err);
       setError(
@@ -37,42 +30,24 @@ export default function OrderDetails() {
   };
 
   const downloadInvoice = async () => {
-  try {
-    const token = localStorage.getItem("token");
+    try {
+      const response = await API.get(`/orders/invoice/${order._id}`, {
+        responseType: "blob",
+      });
 
-    const response = await fetch(
-      `http://localhost:5000/api/orders/invoice/${order._id}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error("Invoice download failed");
+      const url = window.URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `invoice-${order._id}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.log(error);
+      alert("Invoice download failed");
     }
-
-    const blob = await response.blob();
-
-    const url = window.URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `invoice-${order._id}.pdf`;
-
-    document.body.appendChild(link);
-    link.click();
-
-    link.remove();
-    window.URL.revokeObjectURL(url);
-
-  } catch (error) {
-    console.log(error);
-    alert("Invoice download failed");
-  }
-};
+  };
 
   useEffect(() => {
     fetchOrder();

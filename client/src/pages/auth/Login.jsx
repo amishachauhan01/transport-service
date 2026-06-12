@@ -2,6 +2,7 @@ import { useState } from "react";
 import API from "../../api/axios";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import { parseApiError } from "../../utils/parseApiError";
 
 function Login() {
   const navigate = useNavigate();
@@ -12,6 +13,9 @@ function Login() {
     password: "",
   });
 
+  const [submitError, setSubmitError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState([]);
+
   const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
@@ -20,6 +24,9 @@ function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    setSubmitError("");
+    setFieldErrors([]);
 
     try {
       setLoading(true);
@@ -35,7 +42,7 @@ function Login() {
       console.log("TOKEN:", token);
 
       if (!token || !user) {
-        alert("Login failed: invalid response");
+        setSubmitError("Login failed: invalid response");
         return;
       }
 
@@ -60,11 +67,9 @@ function Login() {
 
     } catch (error) {
       console.log("LOGIN ERROR:", error);
-
-      alert(
-        error.response?.data?.message || "Login failed"
-      );
-
+      const { message, fields } = parseApiError(error);
+      setSubmitError(message);
+      setFieldErrors(fields);
     } finally {
       setLoading(false);
     }
@@ -75,6 +80,17 @@ function Login() {
       <h2>Login</h2>
 
       <form onSubmit={handleSubmit}>
+        {submitError && <p style={{ color: "red" }}>{submitError}</p>}
+        {fieldErrors.length > 0 && (
+          <ul style={{ color: "red", paddingLeft: "20px" }}>
+            {fieldErrors.map((error) => (
+              <li key={`${error.field}-${error.message}`}>
+                {error.field}: {error.message}
+              </li>
+            ))}
+          </ul>
+        )}
+
         <input
           name="email"
           placeholder="Email"
